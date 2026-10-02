@@ -7,6 +7,8 @@ A FastAPI backend for a personal address book. Users register, log in to receive
 - **Auth:** bcrypt password hashes, HS256 JWT bearer tokens
 - **Geocoding:** `geopy` + Nominatim (needs outbound internet access)
 
+> **Interactive API docs (Swagger UI):** once the server is running, open **http://127.0.0.1:8000/docs** to browse every endpoint, see its fields and responses, and call it from the browser, including with your login token. A read-only ReDoc view is at **http://127.0.0.1:8000/redoc**. See [Try it in Swagger UI](#5-try-it-in-swagger-ui) for a walkthrough.
+
 ---
 
 ## How to execute
@@ -105,7 +107,7 @@ fastapi dev app/main.py
 ```
 
 - The API is served at **http://127.0.0.1:8000** with auto-reload on.
-- Interactive docs: **http://127.0.0.1:8000/docs** (Swagger UI) and **http://127.0.0.1:8000/redoc** (ReDoc). The raw schema is at `/openapi.json`.
+- **Swagger UI: http://127.0.0.1:8000/docs**, the easiest way to explore and test the API (see step 5). ReDoc is at **http://127.0.0.1:8000/redoc**, and the raw OpenAPI schema is at `/openapi.json`.
 - On startup the app creates any missing tables (`user_accounts`, `user_addresses`). There are no migrations to run.
 - Logs go to the console and to one file per module in `logs/`. The folder is created automatically on first start.
 - Start the server from the project root. The source uses top-level imports (`from utils...`, `from api...`), and the FastAPI CLI puts `app/` on the import path for that. `.env`, the SQLite file, and `logs/`, however, are resolved relative to the current directory.
@@ -118,12 +120,27 @@ fastapi dev app/main.py --host 0.0.0.0        # reachable from other devices on 
 fastapi run app/main.py                       # production mode: no reload, binds 0.0.0.0:8000
 ```
 
-### Quick smoke test
+Quick smoke test:
 
 ```bash
 curl http://127.0.0.1:8000/health
 # {"status":"healthy","database":{"engine":"sqlite","connected":true}}
 ```
+
+### 5. Try it in Swagger UI
+
+Open **http://127.0.0.1:8000/docs**. Endpoints are grouped into **Checks**, **Auth**, **Users**, and **Address**. Expand any endpoint and click **Try it out**, fill in the fields, then click **Execute** to see the real response.
+
+1. **Register:** under **Auth**, run `POST /api/v1/auth/register` with a JSON body such as
+   `{"username": "jdoe", "email": "jdoe@example.com", "name": "John Doe", "password": "supersecret1"}`. Expect `201`.
+2. **Log in:** run `POST /api/v1/auth/login` with `{"username_or_email": "jdoe", "password": "supersecret1"}` and copy the `access_token` value from the response.
+3. **Authorize:** click the **Authorize** button (padlock, top right), paste **only the token** (no `Bearer ` prefix), click **Authorize**, then **Close**. The padlocks on protected endpoints close, and Swagger sends the token with every request from now on. Tokens expire after `ACCESS_TOKEN_EXPIRE_MINUTES` (default 60). After that, log in again and re-authorize.
+4. **Create an address:** run `POST /api/v1/address/`. It shows form fields for the address text only. Coordinates aren't asked for, because they're looked up automatically.
+5. **See it:** run `GET /api/v1/address/my-list`. The new address appears with `latitude` and `longitude` filled in.
+6. **Edit it:**
+   - `PUT /api/v1/address/{address_id}` is a form with every field. Leave `latitude`/`longitude` empty to have them looked up again, or fill in both to set them by hand.
+   - `PATCH /api/v1/address/{address_id}` takes JSON. **Swagger pre-fills every field** (`"string"`, `0`), so delete the lines for fields you don't want to change before clicking Execute. Otherwise the address is overwritten with those placeholder values and moved to coordinates 0, 0.
+7. **Search nearby:** `GET /api/v1/nearby/` needs no login. Enter `latitude`, `longitude`, and optionally `radius_km`/`limit`.
 
 ---
 
@@ -153,7 +170,7 @@ Non-API routes: `GET /` (returns `"Welcome to <PROJECT_NAME>"`, hidden from the 
 
 ### Conventions
 
-**Base URL:** `http://127.0.0.1:8000`. The `curl` examples use bash syntax. On Windows, run them in Git Bash or use the Swagger UI at `/docs`.
+**Base URL:** `http://127.0.0.1:8000`. The `curl` examples use bash syntax. On Windows, run them in Git Bash, or skip curl and use the [Swagger UI](#5-try-it-in-swagger-ui) at `/docs`, which accepts the same fields.
 
 **Authentication.** Endpoints marked *Bearer* need the token returned by `POST /api/v1/auth/login`:
 
@@ -600,6 +617,8 @@ Updates only the fields included in the body.
 | `address_id` | int | ID of the address |
 
 Every field is optional. A field sent as `null` or `""` counts as not sent, and its current value is kept. Every column is required, so a PATCH can't clear one.
+
+> In Swagger UI the example body lists every field with placeholder values (`"string"`, `0`). Remove the fields you aren't changing before you click **Execute**.
 
 | Field | Type | Constraints |
 | --- | --- | --- |

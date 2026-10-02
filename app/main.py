@@ -45,6 +45,10 @@ app = FastAPI(
             "name": "Users",
             "description": "Endpoints for users",
         },
+        {
+            "name": "Address",
+            "description": "Manage your address book entries with automatically resolved GPS coordinates, plus a public nearby search.",
+        },
     ],
 )
 
