@@ -1,4 +1,3 @@
-import sys
 from sqlalchemy.orm import declarative_base, declared_attr
 from utils.config import settings
 
@@ -7,21 +6,31 @@ class CustomBase:
     @declared_attr
     def __tablename__(cls) -> str:
         """
-        Automatically generates table names with category folder prefixes.
-        Example: app.models.authentication.user.User -> auth_users
+        Dynamically extracts parent folder categories to apply custom table prefixes.
+        Example: app.models.authentication.user.Account -> auth_accounts
+        Example: app.models.inventory.address.Address -> inv_addresses
         """
         module_parts = cls.__module__.split(".")
 
-        if len(module_parts) > 3 and module_parts[1] == "models":
-            category = module_parts[2]
+        if "models" in module_parts:
+            models_index = module_parts.index("models")
 
-            # Optional: Shorthand mappings to keep table names clean (e.g., authentication -> auth)
-            shorthand = {}
-            prefix = shorthand.get(category, category)
+            if len(module_parts) > models_index + 1:
+                category = module_parts[models_index + 1]
 
-            return f"{prefix}_{cls.__name__.lower()}s"
+                shorthand = {"authentication": "auth", "inventory": "inv"}
+                prefix = shorthand.get(category, category)
 
-        return f"{cls.__name__.lower()}s"
+                raw_name = cls.__name__.lower()
+                plural_suffix = (
+                    "es" if raw_name.endswith(("s", "x", "z", "ch", "sh")) else "s"
+                )
+
+                return f"{prefix}_{raw_name}{plural_suffix}"
+
+        raw_name = cls.__name__.lower()
+        plural_suffix = "es" if raw_name.endswith(("s", "x", "z", "ch", "sh")) else "s"
+        return f"{raw_name}{plural_suffix}"
 
 
 Base = declarative_base(cls=CustomBase)

@@ -72,6 +72,34 @@ class AccountResponse(BaseModel):
     )
 
 
+class AccountDetailsResponse(AccountBase):
+    """
+    Defines exactly what data is safely returned to the client over HTTP responses.
+    Crucially skips the password string entirely so hashes never leave the server.
+    """
+
+    id: int = Field(
+        ..., description="The unique database primary key auto-increment ID."
+    )
+    is_active: bool = Field(
+        ...,
+        description="Indicates if the account is currently allowed to access the system.",
+    )
+    is_superuser: bool = Field(
+        ...,
+        description="Indicates if the account holds full root administrative access rights.",
+    )
+    created_at: datetime = Field(
+        ..., description="Database timestamp when the account record was generated."
+    )
+    updated_at: datetime = Field(
+        ...,
+        description="Database timestamp tracking the latest structural modification.",
+    )
+
+    model_config = {"from_attributes": True}
+
+
 class AccountListResponse(BaseModel):
     """
     Wraps an array list of account payloads alongside 1-indexed pagination metadata.

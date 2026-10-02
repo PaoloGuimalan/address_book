@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 
 from api.deps import get_db_session
 from utils.logging import get_module_logger
 
-from schemas.user.account import AccountListResponse
+from schemas.user.account import AccountListResponse, AccountDetailsResponse
 from services.user.account import account_crud
 from api.deps import get_current_account
 
@@ -47,3 +47,12 @@ def list_accounts(
         "limit": limit,
         "data": accounts_records,
     }
+
+
+@router.get("/{username}", response_model=AccountDetailsResponse)
+def get_account(username: str, db: Session = Depends(get_db_session)):
+    account = account_crud.get_by_username_or_email(db, username)
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    return account
