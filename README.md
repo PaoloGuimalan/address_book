@@ -1,6 +1,6 @@
 # Address Book API
 
-A FastAPI backend for a personal address book. Users register, log in to receive a JWT, and manage their own addresses. Each address is geocoded to GPS coordinates through OpenStreetMap Nominatim when it is created or its location changes, and a public endpoint finds stored addresses within a radius of any point.
+A FastAPI backend for a personal address book. Users register, log in to receive a JWT, and manage their own addresses. GPS coordinates are filled in automatically through OpenStreetMap Nominatim when an address is created or its location changes, and can be set by hand on update. A public endpoint finds stored addresses within a radius of any point.
 
 - **Framework:** FastAPI, Pydantic v2, SQLAlchemy 2
 - **Database:** SQLite by default. PostgreSQL and MySQL are supported through the same settings.
@@ -139,9 +139,9 @@ curl http://127.0.0.1:8000/health
 | `GET` | `/api/v1/user/{username}` | Bearer | Account details by username **or** email |
 | `GET` | `/api/v1/address/my-list` | Bearer | Paginated list of the caller's addresses |
 | `GET` | `/api/v1/address/{address_id}` | Bearer, owner only | Get one address |
-| `POST` | `/api/v1/address/` | Bearer | Create an address, with coordinates geocoded automatically |
-| `PUT` | `/api/v1/address/{address_id}` | Bearer, owner only | Replace every field of an address |
-| `PATCH` | `/api/v1/address/{address_id}` | Bearer, owner only | Update only the fields sent |
+| `POST` | `/api/v1/address/` | Bearer | Create an address. Coordinates are looked up automatically, so don't send them. |
+| `PUT` | `/api/v1/address/{address_id}` | Bearer, owner only | Replace every field of an address. Coordinates can be set by hand, or left blank to be looked up. |
+| `PATCH` | `/api/v1/address/{address_id}` | Bearer, owner only | Update only the fields sent. Coordinates can be set by hand, or are looked up again when the location changes. |
 | `DELETE` | `/api/v1/address/{address_id}` | Bearer, owner only | Delete an address |
 | `GET` | `/api/v1/nearby/` | Public | Addresses from all accounts within a radius of a point |
 
@@ -439,6 +439,14 @@ curl http://127.0.0.1:8000/api/v1/user/jdoe \
 ### Address
 
 All addresses belong to the account that created them. Every endpoint that takes `{address_id}` first returns `404` if the address doesn't exist, then `403` if it belongs to another account.
+
+**Coordinates are filled in automatically.** You never need to supply `latitude` or `longitude`. The API looks them up from the address text, and you can still set them by hand when editing:
+
+| Endpoint | Coordinates |
+| --- | --- |
+| `POST /address/` (create) | Always looked up automatically. Don't send them; they aren't accepted here. |
+| `PUT /address/{id}` (replace) | Send **both** `latitude` and `longitude` to set them by hand. Leave either one blank or out, and both are looked up again from the new address text. |
+| `PATCH /address/{id}` (partial update) | Send `latitude` and/or `longitude` to set them by hand. If you only change location text (`street_address`, `city`, `state`, `postal_code`, `country`), they're looked up again. If you only change `title`, they stay as they are. |
 
 **Geocoding.** Coordinates come from Nominatim, using the query `"{street_address}, {city}, {state}, {postal_code}, {country}"` with a 5-second timeout. Any endpoint that triggers a lookup can also return:
 
