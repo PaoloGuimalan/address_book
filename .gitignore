@@ -1,0 +1,33 @@
+# --- Python Environment & Caches ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Virtual Environments ---
+.venv/
+venv/
+ENV/
+env/
+
+# --- Environment Variables & Secrets ---
+.env
+.env.[a-zA-Z]*
+!.env.example
+
+# --- Project Specific Logs & Databases ---
+# Blocks your local app.log file
+*.log
+app.log
+
+# Blocks SQLite databases (like test.db)
+*.db
+*.sqlite3
+
+# --- OS Specific Files ---
+.DS_Store
+Thumbs.db
+
+logs/
