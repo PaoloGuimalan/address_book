@@ -37,6 +37,7 @@ def get_module_logger(name: str) -> logging.Logger:
             "[%(asctime)s] %(levelname)s in %(module)s.%(funcName)s (Line %(lineno)d): %(message)s"
         )
 
+        os.makedirs(LOG_DIR, exist_ok=True)
         log_file_path = os.path.join(LOG_DIR, f"{name}.log")
 
         file_handler = logging.FileHandler(log_file_path)

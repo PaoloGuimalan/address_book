@@ -133,10 +133,14 @@ class AddressUpdate(BaseModel):
     country: str = Field(..., min_length=1, max_length=100)
     latitude: OptionalFormFloat = Field(
         default="",
+        ge=-90.0,
+        le=90.0,
         description="Manual GPS latitude override. Leave blank for auto-lookup.",
     )
     longitude: OptionalFormFloat = Field(
         default="",
+        ge=-180.0,
+        le=180.0,
         description="Manual GPS longitude override. Leave blank for auto-lookup.",
     )
 

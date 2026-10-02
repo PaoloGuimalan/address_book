@@ -6,6 +6,7 @@ from utils.config import settings
 from utils.logging import setup_logging, get_module_logger
 from database.session import db_plugin
 
+from api.checks import checks_endpoints
 from api.v1 import v1_router
 
 setup_logging()
@@ -47,6 +48,7 @@ app = FastAPI(
     ],
 )
 
+app.include_router(checks_endpoints)
 app.include_router(v1_router)
 
 

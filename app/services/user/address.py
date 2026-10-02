@@ -21,7 +21,7 @@ class CRUDAddress:
         return (
             db.query(Address)
             .filter(Address.account_id == account_id)
-            .offset(page - 1)
+            .offset((page - 1) * limit)
             .limit(limit)
             .all()
         )
@@ -108,8 +108,9 @@ class CRUDAddress:
     def patch(self, db: Session, db_obj: Address, obj_in: AddressUpdate) -> Address:
         """
         Partially updates an existing Address entry by applying only the fields provided.
+        Null or blank fields count as not provided, since every column is non-nullable.
         """
-        update_data = obj_in.model_dump(exclude_unset=True)
+        update_data = obj_in.model_dump(exclude_unset=True, exclude_none=True)
         location_fields = ["street_address", "city", "state", "postal_code", "country"]
 
         if "latitude" in update_data or "longitude" in update_data:

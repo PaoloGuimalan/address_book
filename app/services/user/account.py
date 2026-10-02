@@ -12,7 +12,7 @@ class CRUDAccount:
         Function for generating accounts list
         """
 
-        return db.query(Account).offset(page - 1).limit(limit).all()
+        return db.query(Account).offset((page - 1) * limit).limit(limit).all()
 
     def get_by_username_or_email(self, db: Session, identity: str) -> Account | None:
         """
